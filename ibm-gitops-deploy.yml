@@ -1,0 +1,19 @@
+steps:
+  - task: CmdLine@2
+    displayName: 'Login into ArgoCD'
+    inputs:
+      script: 'argocd login $(argoServer) --username $(argoUser) --password $(argoPass)'
+  - task: CmdLine@2
+    displayName: 'Set Params in app of ArgoCD'
+    inputs:
+      script: 'argocd app set $(argoApp) -p barURL=$(barURL) -p configuration.policy=policy-policyname'
+  - task: CmdLine@2
+    displayName: 'App Sync ArgoCD'
+    inputs:
+      script: 'argocd app sync $(argoApp) --force'
+  - task: CmdLine@2
+    displayName: 'Get Status of App Sync'
+    inputs:
+      script: |
+        argocd app get $(argoApp) --output "json" > resultGetApp.json
+        STATUS=$(jq --raw-output '.status.resources[].status' resultGetApp.json)

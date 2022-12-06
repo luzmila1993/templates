@@ -1,0 +1,52 @@
+parameters:
+  - name: appOptions
+    type: object
+  - name: appPolicies
+    type: object
+
+steps:
+  - ${{ each application in parameters.appOptions }}:
+    - ${{ each name in application.secret }}:
+      - task: KubernetesManifest@0
+        displayName: 'Create secret for Configuration-IS: ${{ application.name }} ${{ name }}'
+        inputs:
+          action: 'createSecret'
+          kubernetesServiceConnection: $(kubernetesEndpoint)
+          namespace: $(namespaceSecret)
+          secretType: 'generic'
+          secretArguments: '--from-literal=configuration="$(${{ name }})" --insecure-skip-tls-verify'
+          secretName: '${{ name }}'
+          
+  - ${{ each policy in parameters.appPolicies }}:
+    - checkout: ${{ policy }}
+      displayName: 'Checkout Policy Project Files'
+      path: ${{ policy }}
+    - task: ArchiveFiles@2
+      displayName: 'Zip Policy Project'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: true
+        archiveFile: '$(System.DefaultWorkingDirectory)/${{ policy }}.zip'
+        replaceExistingArchive: false
+    - task: CmdLine@2
+      displayName: 'Base64 Encode of ${{ policy }}' 
+      inputs:
+        script: 'base64 -i $(System.DefaultWorkingDirectory)/${{ policy }}.zip > policy.txt'    
+    - task: CmdLine@2
+      displayName: 'Login ArgoCD' 
+      inputs:
+        script: 'argocd login $(argoServer) --username $(argoUser) --password $(argoPass) --grpc-web'
+    - task: CmdLine@2
+      displayName: 'Set Params of secret in Configuration-IS'
+      inputs:
+        script: 'argocd app set ${{ policy }} --grpc-web'  
+    - task: CmdLine@2
+      displayName: 'Set Params of Content in Policy-IS'
+      inputs:
+        script: |
+            POLICY=$(cat policy.txt | tr -d "\n")
+            argocd app set ${{ policy }} -p spec.contents=$POLICY -p metadata.name=${{ policy }}
+    - task: CmdLine@2
+      displayName: 'CRD Configuration-IS and Policy-IS Sync ArgoCD'
+      inputs:
+        script: 'argocd app sync ${{ policy }} --force'

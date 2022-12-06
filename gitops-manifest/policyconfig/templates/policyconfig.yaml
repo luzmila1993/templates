@@ -1,0 +1,9 @@
+apiVersion: appconnect.ibm.com/v1beta1
+kind: Configuration
+metadata:
+  name: {{ .Values.metadata.name }}
+  namespace: {{ .Values.metadata.namespace }}
+spec:
+  contents: {{ .Values.spec.contents }}
+  type: {{ .Values.spec.type }}
+  version: {{ .Values.spec.version }}
