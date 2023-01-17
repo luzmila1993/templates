@@ -14,7 +14,7 @@ steps:
           kubernetesServiceConnection: $(kubernetesEndpoint)
           namespace: $(namespaceSecret)
           secretType: 'generic'
-          secretArguments: '--from-literal=configuration="$(${{ name }})" --insecure-skip-tls-verify'
+          secretArguments: '--from-literal=configuration="$(${{ name }})" --insecure-skip-tls-verify' 
           secretName: '${{ name }}'
           
   - ${{ each policy in parameters.appPolicies }}:
@@ -35,7 +35,7 @@ steps:
     - task: CmdLine@2
       displayName: 'Login ArgoCD' 
       inputs:
-        script: 'argocd login $(argoServer) --username $(argoUser) --password $(argoPass) --grpc-web'
+        script: 'argocd login $(argoServer) --username $(argoUser) --password $(argoPass) --grpc-web --insecure'
     - task: CmdLine@2
       displayName: 'Set Params of secret in Configuration-IS'
       inputs:
