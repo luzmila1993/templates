@@ -2,7 +2,7 @@ steps:
   - task: CmdLine@2
     displayName: 'Login into ArgoCD'
     inputs:
-      script: 'argocd login $(argoServer) --username $(argoUser) --password $(argoPass)' --insecure
+      script: 'argocd login $(argoServer) --username $(argoUser) --password $(argoPass) --insecure'
   - task: CmdLine@2
     displayName: 'Set Params in app of ArgoCD'
     inputs:
